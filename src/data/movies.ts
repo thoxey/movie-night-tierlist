@@ -8,7 +8,7 @@ export interface Movie {
   poster: string | null
 }
 
-const TMDB = (hash: string) => `https://image.tmdb.org/t/p/w500/${hash}.jpg`
+const TMDB = (hash: string) => `https://image.tmdb.org/t/p/w780/${hash}.jpg`
 
 // Source list: ~19 themed weeks of movie picks. The tier list treats them as one
 // flat pool — drag any film into a tier, or leave it in "Missed that week".

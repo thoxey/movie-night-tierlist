@@ -201,13 +201,23 @@ export default function App() {
   )
 
   async function handleExport() {
-    if (!boardRef.current) return
+    const node = boardRef.current
+    if (!node) return
     setExporting(true)
+    // Render the export at a large fixed width so the PNG is high-resolution
+    // regardless of the current window size.
+    const EXPORT_WIDTH = 1400
+    const prevWidth = node.style.width
+    const prevMaxWidth = node.style.maxWidth
     try {
-      // Let the "exporting" class apply before capture.
-      await new Promise((r) => setTimeout(r, 50))
-      const dataUrl = await toPng(boardRef.current, {
+      node.style.width = `${EXPORT_WIDTH}px`
+      node.style.maxWidth = 'none'
+      // Wait for reflow + image decode before capturing.
+      await new Promise((r) => setTimeout(r, 120))
+      const dataUrl = await toPng(node, {
         pixelRatio: 2,
+        width: node.offsetWidth,
+        height: node.offsetHeight,
         backgroundColor: '#15151c',
         cacheBust: true,
       })
@@ -219,6 +229,8 @@ export default function App() {
       console.error(err)
       alert('Sorry — export failed. See the console for details.')
     } finally {
+      node.style.width = prevWidth
+      node.style.maxWidth = prevMaxWidth
       setExporting(false)
     }
   }
