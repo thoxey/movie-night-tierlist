@@ -1,13 +1,17 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import type { PointerEvent } from 'react'
 import type { Movie } from '../data/movies'
 
 interface Props {
   movie: Movie
+  held?: boolean
+  onClick?: () => void
+  onPointerDownCapture?: (e: PointerEvent) => void
 }
 
-/** A draggable / sortable poster card. */
-export function MovieCard({ movie }: Props) {
+/** A draggable / sortable poster card that also supports tap-to-pick-up. */
+export function MovieCard({ movie, held, onClick, onPointerDownCapture }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: movie.id })
 
@@ -21,11 +25,14 @@ export function MovieCard({ movie }: Props) {
     <div
       ref={setNodeRef}
       style={style}
-      className="card"
+      className={`card ${held ? 'held' : ''}`.trim()}
       title={`${movie.title} (${movie.year})`}
+      onClick={onClick}
+      onPointerDownCapture={onPointerDownCapture}
       {...attributes}
       {...listeners}
     >
+      {held && <div className="held-badge" aria-hidden>✓</div>}
       {movie.poster ? (
         <img
           src={movie.poster}
@@ -48,7 +55,7 @@ export function MovieCard({ movie }: Props) {
 }
 
 /** Static (non-interactive) render used for the drag overlay. */
-export function MovieCardOverlay({ movie }: Props) {
+export function MovieCardOverlay({ movie }: { movie: Movie }) {
   return (
     <div className="card card-overlay" style={{ cursor: 'grabbing' }}>
       {movie.poster ? (

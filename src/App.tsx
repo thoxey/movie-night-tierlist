@@ -67,8 +67,12 @@ function loadItems(): Items {
 export default function App() {
   const [items, setItems] = useState<Items>(loadItems)
   const [activeId, setActiveId] = useState<number | null>(null)
+  const [heldId, setHeldId] = useState<number | null>(null)
   const [exporting, setExporting] = useState(false)
   const boardRef = useRef<HTMLDivElement>(null)
+  // True while a real drag is in progress, so the click that follows a drag
+  // doesn't get treated as a tap-to-pick-up. Reset on each fresh pointer down.
+  const didDragRef = useRef(false)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
@@ -90,8 +94,59 @@ export default function App() {
   )
 
   function handleDragStart(event: DragStartEvent) {
+    didDragRef.current = true
+    setHeldId(null)
     setActiveId(event.active.id as number)
   }
+
+  /** Move a movie into a container, optionally before another card; else append. */
+  function moveItem(id: number, toContainer: string, beforeId: number | null = null) {
+    setItems((prev) => {
+      if (!ALL_CONTAINERS.some((c) => prev[c].includes(id))) return prev
+      const next: Items = {}
+      for (const c of ALL_CONTAINERS) next[c] = prev[c].filter((x) => x !== id)
+      const target = next[toContainer]
+      let idx = target.length
+      if (beforeId != null) {
+        const i = target.indexOf(beforeId)
+        if (i >= 0) idx = i
+      }
+      target.splice(idx, 0, id)
+      return next
+    })
+  }
+
+  // Tap a card: pick it up, or — if already holding another — drop the held one
+  // right before this card. Tapping the held card again puts it down.
+  function handleCardTap(id: number) {
+    if (didDragRef.current) {
+      didDragRef.current = false
+      return
+    }
+    if (heldId == null) {
+      setHeldId(id)
+    } else if (heldId === id) {
+      setHeldId(null)
+    } else {
+      const dest = findContainer(id)
+      if (dest) moveItem(heldId, dest, id)
+      setHeldId(null)
+    }
+  }
+
+  // Tap anywhere in a row (label or empty space) to drop the held movie there.
+  function handleRowTap(containerId: string) {
+    if (heldId == null) return
+    moveItem(heldId, containerId)
+    setHeldId(null)
+  }
+
+  // A fresh press clears the stale "did drag" flag before any drag can start.
+  const onCardPointerDown = () => {
+    didDragRef.current = false
+  }
+
+  const heldMovie = heldId != null ? MOVIE_BY_ID.get(heldId) : undefined
 
   function handleDragOver(event: DragOverEvent) {
     const { active, over } = event
@@ -200,15 +255,24 @@ export default function App() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className={`board ${exporting ? 'exporting' : ''}`} ref={boardRef}>
+        <div
+          className={`board ${exporting ? 'exporting' : ''} ${heldId != null ? 'armed' : ''}`.trim()}
+          ref={boardRef}
+        >
           {TIERS.map((tier) => (
-            <div className="tier-row" key={tier.id}>
+            <div className="tier-row" key={tier.id} onClick={() => handleRowTap(tier.id)}>
               <div className="tier-label" style={{ background: tier.color }}>
                 {tier.label}
               </div>
               <DroppableContainer id={tier.id} items={items[tier.id]} className="tier-drop">
                 {items[tier.id].map((id) => (
-                  <MovieCard key={id} movie={MOVIE_BY_ID.get(id)!} />
+                  <MovieCard
+                    key={id}
+                    movie={MOVIE_BY_ID.get(id)!}
+                    held={heldId === id}
+                    onClick={() => handleCardTap(id)}
+                    onPointerDownCapture={onCardPointerDown}
+                  />
                 ))}
               </DroppableContainer>
             </div>
@@ -217,7 +281,10 @@ export default function App() {
           <div className="board-watermark">made with the movie tier list maker</div>
         </div>
 
-        <section className="pool-section">
+        <section
+          className={`pool-section ${heldId != null ? 'armed' : ''}`.trim()}
+          onClick={() => handleRowTap(POOL)}
+        >
           <h2 className="pool-title">
             Tray <span className="pool-count">{items[POOL].length} left</span>
           </h2>
@@ -225,7 +292,15 @@ export default function App() {
             {items[POOL].length === 0 ? (
               <p className="pool-empty">Everything's been ranked. 🎉</p>
             ) : (
-              items[POOL].map((id) => <MovieCard key={id} movie={MOVIE_BY_ID.get(id)!} />)
+              items[POOL].map((id) => (
+                <MovieCard
+                  key={id}
+                  movie={MOVIE_BY_ID.get(id)!}
+                  held={heldId === id}
+                  onClick={() => handleCardTap(id)}
+                  onPointerDownCapture={onCardPointerDown}
+                />
+              ))
             )}
           </DroppableContainer>
         </section>
@@ -234,8 +309,20 @@ export default function App() {
       </DndContext>
 
       <footer className="footer">
+        Tap a poster to pick it up, then tap a tier to place it — or drag.
         Posters via TMDB. Your board is saved in this browser automatically.
       </footer>
+
+      {heldMovie && (
+        <div className="hold-banner" role="status">
+          <span className="hold-text">
+            Placing <strong>{heldMovie.title}</strong> — tap a tier
+          </span>
+          <button className="hold-cancel" onClick={() => setHeldId(null)}>
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -137,6 +137,7 @@ body {
 
 /* ---- cards ---- */
 .card {
+  position: relative;
   width: var(--card-w);
   cursor: grab;
   user-select: none;
@@ -235,8 +236,126 @@ body {
   font-size: 12px;
 }
 
+/* ---- tap-to-pick-up ---- */
+.card.held {
+  cursor: pointer;
+}
+.card.held img,
+.card.held .card-fallback {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.35), 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+.card.held {
+  transform: translateY(-3px);
+}
+.held-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* When a poster is held, rows are tappable drop targets. */
+.board.armed .tier-row,
+.pool-section.armed {
+  cursor: pointer;
+}
+.board.armed .tier-drop,
+.pool-section.armed .pool-drop {
+  outline: 2px dashed rgba(124, 92, 255, 0.45);
+  outline-offset: -2px;
+}
+
+/* ---- held banner (mobile-friendly bottom bar) ---- */
+.hold-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px 10px 16px;
+  background: #211c38;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+.hold-text {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hold-cancel {
+  flex: 0 0 auto;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* during export, hide the dashed hover states for a clean image */
 .board.exporting .is-over {
   background: var(--panel-2);
   box-shadow: none;
+}
+
+/* ---- mobile ---- */
+@media (max-width: 640px) {
+  :root {
+    --card-w: 70px;
+  }
+  .app {
+    padding: 14px 10px 88px;
+  }
+  .topbar {
+    gap: 10px;
+  }
+  .topbar h1 {
+    font-size: 21px;
+  }
+  .subtitle {
+    font-size: 13px;
+  }
+  .tier-label {
+    flex-basis: 46px;
+    font-size: 22px;
+    min-height: 116px;
+  }
+  .tier-drop {
+    min-height: 116px;
+    gap: 5px;
+    padding: 5px;
+  }
+  .board {
+    padding: 7px;
+  }
+  .tier-row {
+    gap: 6px;
+  }
+  .card-caption {
+    font-size: 9px;
+  }
+  .btn {
+    padding: 8px 12px;
+  }
 }
