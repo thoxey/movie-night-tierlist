@@ -34,13 +34,7 @@ export function MovieCard({ movie, held, onClick, onPointerDownCapture }: Props)
     >
       {held && <div className="held-badge" aria-hidden>✓</div>}
       {movie.poster ? (
-        <img
-          src={movie.poster}
-          alt={movie.title}
-          crossOrigin="anonymous"
-          draggable={false}
-          loading="lazy"
-        />
+        <img src={movie.poster} alt={movie.title} draggable={false} loading="lazy" />
       ) : (
         <div className="card-fallback">
           <span>{movie.title}</span>
@@ -59,7 +53,7 @@ export function MovieCardOverlay({ movie }: { movie: Movie }) {
   return (
     <div className="card card-overlay" style={{ cursor: 'grabbing' }}>
       {movie.poster ? (
-        <img src={movie.poster} alt={movie.title} crossOrigin="anonymous" draggable={false} />
+        <img src={movie.poster} alt={movie.title} draggable={false} />
       ) : (
         <div className="card-fallback">
           <span>{movie.title}</span>

@@ -8,7 +8,10 @@ export interface Movie {
   poster: string | null
 }
 
-const TMDB = (hash: string) => `https://image.tmdb.org/t/p/w780/${hash}.jpg`
+// Posters are vendored into /public/posters/<hash>.jpg (downloaded from TMDB)
+// so they're served same-origin. That makes them load reliably AND keeps the
+// PNG export from tainting the canvas — no runtime dependency on TMDB's CDN.
+const TMDB = (hash: string) => `/posters/${hash}.jpg`
 
 // Source list: ~19 themed weeks of movie picks. The tier list treats them as one
 // flat pool — drag any film into a tier, or leave it in "Missed that week".
